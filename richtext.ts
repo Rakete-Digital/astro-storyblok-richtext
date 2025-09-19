@@ -227,7 +227,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     return html as unknown as T;
   };
 
-  // table resolvers omitted for brevity – keep yours
+  // table resolvers
   const tableResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
     const attributes = processAttributes(node.attrs);
     const children = node.children || null as any;
@@ -325,7 +325,11 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
   };
 
   function renderNode(node: StoryblokRichTextNode<T>): T {
-    const resolver = mergedResolvers.get(node.type);
+    if (!node || typeof node !== 'object' || !('type' in node)) {
+      return '' as unknown as T;
+    }
+
+    const resolver = mergedResolvers.get(node.type as StoryblokRichTextNodeTypes);
     if (!resolver) {
       console.error('<Storyblok>', `No resolver found for node type ${node.type}`);
       return '' as unknown as T;
@@ -337,7 +341,9 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
       return resolver(node as StoryblokRichTextNode<T>, context);
     }
 
-    const children = node.content ? node.content.map(render) : undefined;
+    const children = node.content
+      ? node.content.filter(Boolean).map(render) // filter null/undefined
+      : undefined;
 
     return resolver({
       ...node,
@@ -345,11 +351,18 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     }, context);
   }
 
-  function render(node: StoryblokRichTextNode<T>): T {
-    if (node.type === 'doc') {
-      return isExternalRenderFn ? node.content.map(renderNode) as T : node.content.map(renderNode).join('') as T;
+  function render(node: any): T {
+    if (Array.isArray(node)) {
+      return node.filter(Boolean).map(renderNode) as T;
     }
-    return Array.isArray(node) ? node.map(renderNode) as T : renderNode(node) as T;
+    if (!node) return '' as T;
+    if (node.type === 'doc') {
+      const rendered = node.content
+        .filter(Boolean)
+        .map(renderNode);
+      return isExternalRenderFn ? rendered as T : rendered.join('') as T;
+    }
+    return renderNode(node) as T;
   }
 
   return {
