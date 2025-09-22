@@ -1,0 +1,13 @@
+{
+  "name": "astro-storyblok-richtext",
+  "version": "1.0.0",
+  "description": "Astro component for rendering Storyblok RichText",
+  "main": "index.js",
+  "keywords": [
+    "astro",
+    "storyblok",
+    "richtext"
+  ],
+  "author": "Storyblok",
+  "license": "MIT"
+}
