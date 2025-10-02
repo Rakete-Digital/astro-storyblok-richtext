@@ -1,0 +1,55 @@
+---
+import { richTextRender } from "./richTextRender";
+
+const richTextHasContent = (richText) => {
+  try {
+    let content = richText?.content || [];
+
+    for (let item of content) {
+      if (Array.isArray(item.content) && item.content?.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Invalid JSON input:", error);
+    return false;
+  }
+};
+
+const { content, className = "", style = {}, ...rest } = Astro.props;
+
+const html = await richTextRender(content);
+---
+
+{
+  richTextHasContent(content) && (
+    <div
+      class:list={["rich-text-render", className]}
+      style={style}
+      set:html={html}
+      {...rest}
+    />
+  )
+}
+
+<style is:global lang="less">
+  .rich-text-render.rich-text-render {
+    *:not(a):not(a *) {
+      color: var(--contentColor);
+    }
+
+    ul {
+      li {
+        color: var(--contentColor);
+      }
+    }
+
+    ol {
+      li {
+        color: var(--contentColor);
+      }
+    }
+  }
+</style>
