@@ -2,54 +2,59 @@
 import { richTextRender } from "./richTextRender";
 
 const richTextHasContent = (richText) => {
-  try {
-    let content = richText?.content || [];
-
-    for (let item of content) {
-      if (Array.isArray(item.content) && item.content?.length > 0) {
-        return true;
-      }
+    try {
+        let content = richText?.content || [];
+        for (let item of content) {
+            if (Array.isArray(item.content) && item.content?.length > 0) {
+                return true;
+            }
+        }
+        return false;
+    } catch (error) {
+        console.error("Invalid JSON input:", error);
+        return false;
     }
-
-    return false;
-  } catch (error) {
-    console.error("Invalid JSON input:", error);
-    return false;
-  }
 };
 
-const { content, className = "", style = {}, ...rest } = Astro.props;
+const {
+    content,
+    className = "",
+    style = {},
+    except,
+    resolvers,
+    ...rest
+}: {
+    content: any;
+    className?: string;
+    style?: Record<string, any>;
+    except?: string[];
+    resolvers?: any;
+    [key: string]: any;
+} = Astro.props;
 
-const html = await richTextRender(content);
+const html = await richTextRender(content, { except, resolvers });
 ---
 
 {
-  richTextHasContent(content) && (
-    <div
-      class:list={["rich-text-render", className]}
-      style={style}
-      set:html={html}
-      {...rest}
-    />
-  )
+    richTextHasContent(content) && (
+        <div
+            class:list={["rich-text-render", className]}
+            style={style}
+            set:html={html}
+            {...rest}
+        />
+    )
 }
 
 <style is:global lang="less">
-  .rich-text-render.rich-text-render {
-    *:not(a):not(a *) {
-      color: var(--contentColor);
-    }
+    .rich-text-render {
+        *:not(a):not(a *) {
+            color: var(--contentColor);
+        }
 
-    ul {
-      li {
-        color: var(--contentColor);
-      }
+        ul li,
+        ol li {
+            color: var(--contentColor);
+        }
     }
-
-    ol {
-      li {
-        color: var(--contentColor);
-      }
-    }
-  }
 </style>
