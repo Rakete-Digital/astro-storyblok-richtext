@@ -1,4 +1,4 @@
-export const richTextHasContent = (richText) => {
+const richTextHasContent = (richText) => {
     try {
         let content = richText?.content || [];
         for (let item of content) {
@@ -12,3 +12,5 @@ export const richTextHasContent = (richText) => {
         return false;
     }
 };
+
+export default richTextHasContent
