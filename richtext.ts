@@ -57,6 +57,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     resolvers = {},
     optimizeImages = false,
     keyedResolvers = false,
+    language
   } = options;
   const isExternalRenderFn = renderFn !== defaultRenderFn;
 
@@ -213,9 +214,9 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
 
       if (container) {
         const promise = container
-          .renderToString(StoryblokComponent, { props: { blok } })
-          .then((result) => ({ id, result }))
-          .catch((err) => {
+          .renderToString(StoryblokComponent, { props: { blok, language } })
+          .then((result: any) => ({ id, result }))
+          .catch((err: any) => {
             console.error('Component rendering failed:', err);
             return { id, result: '<!-- Component render error -->' };
           });

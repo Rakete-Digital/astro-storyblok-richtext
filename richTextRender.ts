@@ -24,7 +24,7 @@ const defaultResolvers: Resolvers = {
 };
 
 export async function richTextRender(content: any, options: RichTextRenderOptions = {}) {
-    const { except = [], resolvers = {} } = options;
+    const { except = [], resolvers = {}, language } = options;
 
     // filter out excluded resolvers
     const filteredResolvers: Resolvers = Object.fromEntries(
@@ -38,6 +38,7 @@ export async function richTextRender(content: any, options: RichTextRenderOption
             ...filteredResolvers,
             ...resolvers, // user overrides
         },
+        language
     });
 
     return resolver.renderHTML(content);

@@ -323,6 +323,7 @@ export interface StoryblokRichTextOptions<T = string, S = (tag: string, attrs: B
    * ```
    */
   keyedResolvers?: boolean;
+  language?: string;
 }
 
 
@@ -335,4 +336,5 @@ export type Resolvers = Partial<Record<ResolverKey, ResolverFn>>;
 export interface RichTextRenderOptions {
   except?: ResolverKey[]; // resolvers to exclude
   resolvers?: Resolvers;  // custom resolvers (overrides defaults)
+  language?: string;
 }
