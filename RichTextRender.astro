@@ -8,6 +8,7 @@ const {
     style = {},
     except,
     resolvers,
+    language,
     ...rest
 }: {
     content: any;
@@ -15,10 +16,11 @@ const {
     style?: Record<string, any>;
     except?: string[];
     resolvers?: any;
+    language?: string;
     [key: string]: any;
 } = Astro.props;
 
-const html = await richTextRender(content, { except, resolvers });
+const html = await richTextRender(content, { except, resolvers, language: "en" });
 ---
 
 {
