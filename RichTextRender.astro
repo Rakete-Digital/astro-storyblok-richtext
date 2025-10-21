@@ -20,7 +20,7 @@ const {
     [key: string]: any;
 } = Astro.props;
 
-const html = await richTextRender(content, { except, resolvers, language: "en" });
+const html = await richTextRender(content, { except, resolvers, language });
 ---
 
 {
