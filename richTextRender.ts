@@ -1,4 +1,6 @@
 import { richTextResolver } from "./richtext";
+import transformAsset from "./transformAsset";
+
 import { type Resolvers, type RichTextRenderOptions, type ResolverKey, MarkTypes, TextNode } from "./types";
 
 const defaultResolvers: Resolvers = {
@@ -19,7 +21,7 @@ const defaultResolvers: Resolvers = {
             finalHref += `#${anchor}`;
         }
 
-        return `<a href="${finalHref}" target="${target || "_self"}" class="rich-text-link">${node.text}</a>`;
+        return `<a href="${transformAsset(finalHref)}" target="${target || "_self"}" class="rich-text-link">${node.text}</a>`;
     },
 };
 
