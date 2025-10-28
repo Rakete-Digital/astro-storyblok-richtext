@@ -132,5 +132,13 @@ const html = await richTextRender(content, { except, resolvers, language });
             line-height: 1.8rem !important;
             margin-top: 42px;
         }
+
+        > p:last-child {
+            margin-bottom: 0;
+        }
+
+        > p:only-child {
+            margin: 0;
+        }
     }
 </style>
