@@ -21,7 +21,7 @@ const defaultResolvers: Resolvers = {
             finalHref += `#${anchor}`;
         }
 
-        return `<a href="${transformAsset(finalHref)}" target="${target || "_self"}" class="rich-text-link">${node.text}</a>`;
+        return `<a href="${transformAsset(finalHref)}" target="${target || "_self"}" aria-label="${node.text}" class="rich-text-link">${node.text}</a>`;
     },
 };
 
