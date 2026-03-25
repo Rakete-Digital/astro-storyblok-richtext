@@ -1,10 +1,4 @@
 import { optimizeImage } from './images-optimization';
-import {
-  BlockTypes,
-  LinkTypes,
-  MarkTypes,
-  TextTypes,
-} from './types';
 import type {
   BlockAttributes,
   MarkNode,
@@ -15,16 +9,11 @@ import type {
   StoryblokRichTextOptions,
   TextNode,
 } from './types';
-import {
-  attrsToString,
-  attrsToStyle,
-  cleanObject,
-  escapeHtml,
-  SELF_CLOSING_TAGS,
-} from './utils';
+import { BlockTypes, LinkTypes, MarkTypes, TextTypes } from './types';
+import { attrsToString, attrsToStyle, cleanObject, escapeHtml, SELF_CLOSING_TAGS } from './utils';
 
-import { experimental_AstroContainer } from 'astro/container';
 import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+import { experimental_AstroContainer } from 'astro/container';
 
 // Astro container and async queue for component resolver
 let container: null | experimental_AstroContainer = null;
@@ -57,7 +46,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     resolvers = {},
     optimizeImages = false,
     keyedResolvers = false,
-    language
+    language,
   } = options;
   const isExternalRenderFn = renderFn !== defaultRenderFn;
 
@@ -82,10 +71,11 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     });
   };
 
-  const nodeResolver = (tag: string): StoryblokRichTextNodeResolver<T> =>
+  const nodeResolver =
+    (tag: string): StoryblokRichTextNodeResolver<T> =>
     (node: StoryblokRichTextNode<T>, context): T => {
       const attributes = processAttributes(node.attrs);
-      return context.render(tag, attributes, node.children || null as any) as T;
+      return context.render(tag, attributes, node.children || (null as any)) as T;
     };
 
   const imageResolver: StoryblokRichTextNodeResolver<T> = (node, context) => {
@@ -126,27 +116,35 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
       loading: 'lazy',
     }) as T;
 
-    return context.render('span', {
-      'data-type': 'emoji',
-      'data-name': node.attrs?.name,
-      'data-emoji': node.attrs?.emoji,
-    }, internalImg) as T;
-  };
-
-  const codeBlockResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
-    return context.render('pre', node.attrs || {}, context.render('code', {}, node.children || '' as any),
+    return context.render(
+      'span',
+      {
+        'data-type': 'emoji',
+        'data-name': node.attrs?.name,
+        'data-emoji': node.attrs?.emoji,
+      },
+      internalImg,
     ) as T;
   };
 
-  const markResolver = (tag: string, styled = false): StoryblokRichTextNodeResolver<T> =>
+  const codeBlockResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
+    return context.render(
+      'pre',
+      node.attrs || {},
+      context.render('code', {}, node.children || ('' as any)),
+    ) as T;
+  };
+
+  const markResolver =
+    (tag: string, styled = false): StoryblokRichTextNodeResolver<T> =>
     ({ text, attrs }, context): T => {
       const { class: className, id: idName, ...styleAttrs } = attrs || {};
       const attributes = styled
         ? {
-          class: className,
-          id: idName,
-          style: attrsToStyle(styleAttrs) || undefined,
-        }
+            class: className,
+            id: idName,
+            style: attrsToStyle(styleAttrs) || undefined,
+          }
         : attrs || {};
 
       return context.render(tag, cleanObject(attributes), text as any) as T;
@@ -199,31 +197,33 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     return context.render('a', attributes, node.text as any) as T;
   };
 
-  /** 
-   * Component resolver — uses AstroContainer 
+  /**
+   * Component resolver — uses AstroContainer
    * returns placeholders and queues async renders
    */
   const componentResolver: StoryblokRichTextNodeResolver<T> = (node): T => {
     const componentBody = node.attrs?.body;
     if (!Array.isArray(componentBody)) return '' as T;
 
-    const html = componentBody.map((blok) => {
-      if (!blok || typeof blok !== 'object') return '';
-      const id = crypto.randomUUID();
-      const placeholder = `<!--ASYNC-${id}-->`;
+    const html = componentBody
+      .map((blok) => {
+        if (!blok || typeof blok !== 'object') return '';
+        const id = crypto.randomUUID();
+        const placeholder = `<!--ASYNC-${id}-->`;
 
-      if (container) {
-        const promise = container
-          .renderToString(StoryblokComponent, { props: { blok, language } })
-          .then((result: any) => ({ id, result }))
-          .catch((err: any) => {
-            console.error('Component rendering failed:', err);
-            return { id, result: '<!-- Component render error -->' };
-          });
-        asyncReplacements.push(promise);
-      }
-      return placeholder;
-    }).join('\n');
+        if (container) {
+          const promise = container
+            .renderToString(StoryblokComponent, { props: { blok, language } })
+            .then((result: any) => ({ id, result }))
+            .catch((err: any) => {
+              console.error('Component rendering failed:', err);
+              return { id, result: '<!-- Component render error -->' };
+            });
+          asyncReplacements.push(promise);
+        }
+        return placeholder;
+      })
+      .join('\n');
 
     return html as unknown as T;
   };
@@ -231,7 +231,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
   // table resolvers
   const tableResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
     const attributes = processAttributes(node.attrs);
-    const children = node.children || null as any;
+    const children = node.children || (null as any);
     return context.render('table', attributes, context.render('tbody', {}, children)) as T;
   };
 
@@ -254,7 +254,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     };
     return context.render('td', cleanObject(attributes), node.children) as T;
   };
-  
+
   const tableHeaderResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
     const { colspan, rowspan, colwidth, backgroundColor, textAlign, ...rest } = node.attrs || {};
     const styles: string[] = [];
@@ -268,6 +268,21 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
       ...(styles.length > 0 ? { style: styles.join(' ') } : {}),
     };
     return context.render('th', cleanObject(attributes), node.children) as T;
+  };
+
+  const textStyleResolverWithoutColor: StoryblokRichTextNodeResolver<T> = (
+    { text, attrs },
+    context,
+  ): T => {
+    const { class: className, id: idName, color, ...styleAttrs } = attrs || {};
+
+    const attributes = cleanObject({
+      class: className,
+      id: idName,
+      style: attrsToStyle(styleAttrs) || undefined,
+    });
+
+    return context.render('span', attributes, text as any) as T;
   };
 
   const originalResolvers = new Map<StoryblokRichTextNodeTypes, StoryblokRichTextNodeResolver<T>>([
@@ -289,7 +304,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     [MarkTypes.ANCHOR, linkResolver],
     [MarkTypes.STYLED, markResolver('span', true)],
     [MarkTypes.BOLD, markResolver('strong')],
-    [MarkTypes.TEXT_STYLE, markResolver('span', true)],
+    [MarkTypes.TEXT_STYLE, textStyleResolverWithoutColor],
     [MarkTypes.ITALIC, markResolver('em')],
     [MarkTypes.UNDERLINE, markResolver('u')],
     [MarkTypes.STRIKE, markResolver('s')],
@@ -305,7 +320,10 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
 
   const mergedResolvers = new Map<StoryblokRichTextNodeTypes, StoryblokRichTextNodeResolver<T>>([
     ...originalResolvers,
-    ...(Object.entries(resolvers).map(([type, resolver]) => [type as StoryblokRichTextNodeTypes, resolver])) as unknown as Array<[StoryblokRichTextNodeTypes, StoryblokRichTextNodeResolver<T>]>,
+    ...(Object.entries(resolvers).map(([type, resolver]) => [
+      type as StoryblokRichTextNodeTypes,
+      resolver,
+    ]) as unknown as Array<[StoryblokRichTextNodeTypes, StoryblokRichTextNodeResolver<T>]>),
   ]);
 
   const createRenderContext = () => {
@@ -346,10 +364,13 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
       ? node.content.filter(Boolean).map(render) // filter null/undefined
       : undefined;
 
-    return resolver({
-      ...node,
-      children: children as T,
-    }, context);
+    return resolver(
+      {
+        ...node,
+        children: children as T,
+      },
+      context,
+    );
   }
 
   function render(node: any): T {
@@ -358,10 +379,8 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     }
     if (!node) return '' as T;
     if (node.type === 'doc') {
-      const rendered = node.content
-        .filter(Boolean)
-        .map(renderNode);
-      return isExternalRenderFn ? rendered as T : rendered.join('') as T;
+      const rendered = node.content.filter(Boolean).map(renderNode);
+      return isExternalRenderFn ? (rendered as T) : (rendered.join('') as T);
     }
     return renderNode(node) as T;
   }
@@ -377,7 +396,7 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
       asyncReplacements = [];
       let html = render(richTextField) as string;
       const results = await Promise.all(asyncReplacements);
-      const replacements = new Map(results.map(r => [r.id, r.result ?? '']));
+      const replacements = new Map(results.map((r) => [r.id, r.result ?? '']));
       html = html.replace(/<!--ASYNC-([\w-]+)-->/g, (_, id) => replacements.get(id) ?? '');
       return html;
     },
