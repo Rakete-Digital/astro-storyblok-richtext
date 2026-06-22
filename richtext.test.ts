@@ -202,6 +202,46 @@ describe('richtext', () => {
       expect(html).toBe('<ol order="1"><li>Item 1</li><li>Item 2</li></ol>');
     });
 
+    it('should keep nested lists inside their parent list item', async () => {
+      const { render } = richTextResolver({});
+      const list = {
+        type: 'ordered_list',
+        content: [
+          {
+            type: 'list_item',
+            content: [
+              {
+                type: 'text',
+                text: 'Third',
+              },
+              {
+                type: 'bullet_list',
+                content: [
+                  {
+                    type: 'list_item',
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [
+                          {
+                            type: 'text',
+                            text: 'Nested item',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const html = render(list as unknown as StoryblokRichTextNode<string>);
+      expect(html).toBe('<ol><li><p>Third</p><ul><li><p>Nested item</p></li></ul></li></ol>');
+    });
+
     it('should render an image with attrs', async () => {
       const { render } = richTextResolver({});
       const image = {
@@ -1416,6 +1456,35 @@ describe('text Alignment', () => {
 
     const html = render(node as StoryblokRichTextNode<string>);
     expect(html).toBe('<ul><li style="text-align: right;"><p>Right aligned list item</p></li></ul>');
+  });
+
+  it('should center aligned lists with their markers', async () => {
+    const { render } = richTextResolver();
+    const node = {
+      type: 'bullet_list',
+      attrs: {
+        textAlign: 'center',
+      },
+      content: [
+        {
+          type: 'list_item',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Centered list item',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const html = render(node as StoryblokRichTextNode<string>);
+    expect(html).toBe('<ul style="text-align: center; list-style-position: inside; padding-left: 0;"><li><p>Centered list item</p></li></ul>');
   });
 
   it('should handle text alignment in table cells', async () => {

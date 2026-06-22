@@ -71,12 +71,87 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     });
   };
 
+  const appendStyle = (attrs: BlockAttributes = {}, ...styleRules: string[]): BlockAttributes => {
+    const nextStyles = [attrs.style, ...styleRules]
+      .filter(Boolean)
+      .map((style) => (style as string).trim())
+      .join(' ');
+
+    return cleanObject({
+      ...attrs,
+      ...(nextStyles ? { style: nextStyles } : {}),
+    });
+  };
+
+  const processListAttributes = (attrs: BlockAttributes = {}): BlockAttributes => {
+    const attributes = processAttributes(attrs);
+    if (attrs.textAlign === 'center') {
+      return appendStyle(attributes, 'list-style-position: inside;', 'padding-left: 0;');
+    }
+    return attributes;
+  };
+
   const nodeResolver =
     (tag: string): StoryblokRichTextNodeResolver<T> =>
     (node: StoryblokRichTextNode<T>, context): T => {
       const attributes = processAttributes(node.attrs);
       return context.render(tag, attributes, node.children || (null as any)) as T;
     };
+
+  const listResolver =
+    (tag: 'ul' | 'ol'): StoryblokRichTextNodeResolver<T> =>
+    (node: StoryblokRichTextNode<T>, context): T => {
+      const attributes = processListAttributes(node.attrs);
+      return context.render(tag, attributes, node.children || (null as any)) as T;
+    };
+
+  const listItemResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
+    const attributes = processListAttributes(node.attrs);
+    const content = node.content || [];
+    const blockChildren: StoryblokRichTextNodeTypes[] = [
+      BlockTypes.PARAGRAPH,
+      BlockTypes.UL_LIST,
+      BlockTypes.OL_LIST,
+      BlockTypes.QUOTE,
+      BlockTypes.CODE_BLOCK,
+      BlockTypes.TABLE,
+    ];
+    const hasBlockChildren = content.some(child => blockChildren.includes(child.type));
+
+    if (!hasBlockChildren) {
+      return context.render('li', attributes, node.children || (null as any)) as T;
+    }
+
+    const renderedChildren: T[] = [];
+    let inlineChildren: T[] = [];
+
+    const flushInlineChildren = () => {
+      if (!inlineChildren.length) return;
+      const paragraphChildren = isExternalRenderFn
+        ? (inlineChildren as T)
+        : (inlineChildren.join('') as T);
+      renderedChildren.push(context.render('p', {}, paragraphChildren));
+      inlineChildren = [];
+    };
+
+    for (const child of content) {
+      const renderedChild = render(child);
+      if (blockChildren.includes(child.type)) {
+        flushInlineChildren();
+        renderedChildren.push(renderedChild);
+        continue;
+      }
+      inlineChildren.push(renderedChild);
+    }
+
+    flushInlineChildren();
+
+    const children = isExternalRenderFn
+      ? (renderedChildren as T)
+      : (renderedChildren.join('') as T);
+
+    return context.render('li', attributes, children) as T;
+  };
 
   const imageResolver: StoryblokRichTextNodeResolver<T> = (node, context) => {
     const { src, alt, title, srcset, sizes } = node.attrs || {};
@@ -289,9 +364,9 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
     [BlockTypes.DOCUMENT, nodeResolver('')],
     [BlockTypes.HEADING, headingResolver],
     [BlockTypes.PARAGRAPH, nodeResolver('p')],
-    [BlockTypes.UL_LIST, nodeResolver('ul')],
-    [BlockTypes.OL_LIST, nodeResolver('ol')],
-    [BlockTypes.LIST_ITEM, nodeResolver('li')],
+    [BlockTypes.UL_LIST, listResolver('ul')],
+    [BlockTypes.OL_LIST, listResolver('ol')],
+    [BlockTypes.LIST_ITEM, listItemResolver],
     [BlockTypes.IMAGE, imageResolver],
     [BlockTypes.EMOJI, emojiResolver],
     [BlockTypes.CODE_BLOCK, codeBlockResolver],
