@@ -36,72 +36,96 @@ const html = await richTextRender(content, { except, resolvers, language });
 
 <style is:global lang="less">
     .rich-text-render.rich-text-render {
-        /* === Reset === */
-        ul,
-        ol {
+        ol,
+        ul {
             margin: 0;
             padding: 0;
-            list-style-position: outside;
+            list-style: none;
         }
 
-        /* === Unordered List === */
-        ul {
-            list-style-type: disc;
-            padding-left: 1.5rem;
-            margin-bottom: 1.5rem;
-
-            ::marker {
-                font-weight: @font-weight__bold;
-            }
+        > ol,
+        > ul {
+            display: inline-block;
+            max-width: 100%;
+            margin: 0 0 1.5rem;
+            text-align: left;
         }
 
-        ul li {
-            margin-bottom: 0.5rem;
-            line-height: 1.6;
-        }
-
-        /* === Ordered List === */
         ol {
-            list-style-type: decimal;
-            padding-left: 1.5rem;
-            margin-bottom: 1.5rem;
-
-            ::marker {
-                font-weight: @font-weight__bold;
-            }
+            counter-reset: rich-text-list-item;
         }
 
-        ol li {
-            margin-bottom: 0.5rem;
+        li {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            column-gap: 0.4em;
+            align-items: start;
+            list-style: none;
             line-height: 1.6;
         }
 
-        /* === Nested Lists === */
-        ul ul,
-        ol ol,
-        ul ol,
-        ol ul {
+        li::marker {
+            content: "";
+        }
+
+        li::before {
+            grid-column: 1;
+            line-height: inherit;
+        }
+
+        li > :not(ol):not(ul) {
+            grid-column: 2;
+            margin: 0;
+        }
+
+        li > ul,
+        li > ol {
+            grid-column: 2;
             margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-            padding-left: 1.5rem;
+            padding: 0;
+            text-align: left;
         }
 
-        /* Nested unordered lists */
-        ul ul {
-            list-style-type: circle;
+        li + li {
+            margin-top: 0.5rem;
         }
 
-        ul ul ul {
-            list-style-type: square;
+        ul > li::before {
+            content: "•";
+            font-weight: 700;
         }
 
-        /* Nested ordered lists */
+        ul ul > li::before {
+            content: "◦";
+        }
+
+        ul ul ul > li::before {
+            content: "▪";
+        }
+
+        ol > li {
+            counter-increment: rich-text-list-item;
+        }
+
+        ol > li::before {
+            content: counter(rich-text-list-item) ".";
+            font-weight: 700;
+        }
+
         ol ol {
-            list-style-type: lower-alpha;
+            counter-reset: rich-text-list-item;
+        }
+
+        ol ol > li::before {
+            content: counter(rich-text-list-item, lower-alpha) ".";
         }
 
         ol ol ol {
-            list-style-type: lower-roman;
+            counter-reset: rich-text-list-item;
+        }
+
+        ol ol ol > li::before {
+            content: counter(rich-text-list-item, lower-roman) ".";
         }
 
         img,
@@ -114,7 +138,7 @@ const html = await richTextRender(content, { except, resolvers, language });
         }
 
         blockquote {
-            border-left: 1px solid @primary;
+            border-left: 1px solid #180165;
             padding: 20px 0 20px 20px;
         }
 
