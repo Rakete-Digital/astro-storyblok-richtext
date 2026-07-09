@@ -307,7 +307,8 @@ export function richTextResolver<T>(options: StoryblokRichTextOptions<T> = {}) {
   const tableResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
     const attributes = processAttributes(node.attrs);
     const children = node.children || (null as any);
-    return context.render('table', attributes, context.render('tbody', {}, children)) as T;
+    const table = context.render('table', attributes, context.render('tbody', {}, children));
+    return context.render('div', { class: 'rich-text__table' }, table) as T;
   };
 
   const tableRowResolver: StoryblokRichTextNodeResolver<T> = (node, context): T => {
